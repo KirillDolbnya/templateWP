@@ -1,0 +1,27 @@
+.container {
+  width: 100%;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 15px;
+
+  @include media-1920 {
+    max-width: 1400px;
+  }
+
+  @include media-1440 {
+    max-width: 1280px;
+    padding: 0 80px;
+  }
+
+  @include media-1024 {
+    padding: 0 40px;
+  }
+
+  @include media-1024 {
+    padding: 0 40px;
+  }
+
+  @include media-600 {
+    padding: 0 50px;
+  }
+}

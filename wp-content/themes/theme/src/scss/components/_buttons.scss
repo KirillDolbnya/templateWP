@@ -1,0 +1,28 @@
+.primary{
+  display: block;
+  padding: 17px 16px;
+  border-radius: 120px;
+  background: $blue;
+  color: $white;
+  font-size: $font-size;
+  font-style: normal;
+  font-weight: 600;
+  line-height: 125%;
+  transition: all .3s;
+
+  &:hover{
+    transform: scale(0.95);
+  }
+  &:active{
+    transform: scale(0.9);
+  }
+
+  &:disabled{
+    opacity: .7;
+    background: rgba(201, 201, 201, 0.78);
+
+    &:hover{
+      transform: scale(1);
+    }
+  }
+}
