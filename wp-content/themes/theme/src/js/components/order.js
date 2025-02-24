@@ -1,71 +1,63 @@
 jQuery( document ).ready(function($) {
 
-    function updateSelection(groupSelector) {
-        $(groupSelector).each(function () {
-            let input = $(this).find("input[type='radio']");
-            let circle = $(this).find(".circle");
+    function updateHiddenFields() {
+        const delivery = $('.cart__order-delivery--item input[type="radio"]:checked')
+            .siblings('.cart__order-delivery--item_info')
+            .find('p').text().trim();
 
-            if (input.is(':checked')) {
-                circle.css("background", "#000"); // активный цвет
-            } else {
-                circle.css("background", "#F2F2F2"); // стандартный цвет
-            }
+        const payment = $('.cart__order-payment--item input[type="radio"]:checked')
+            .siblings('.cart__order-payment--item_info')
+            .find('p').text().trim();
+
+        $('#selected-delivery').val(delivery);
+        $('#selected-payment').val(payment);
+
+        // Добавляем или убираем атрибут disabled у поля адреса
+        if (delivery === 'Самовывоз') {
+            $('input[name="address"]').attr('disabled', true).val(''); // Очищаем поле при самовывозе
+        } else {
+            $('input[name="address"]').removeAttr('disabled');
+        }
+    }
+
+// Инициализация и обработка событий
+    updateHiddenFields();
+
+    function handleRadioChange(selector) {
+        $(selector).on('change', 'input[type="radio"]', function () {
+            $(selector + ' input[type="radio"]').prop('checked', false);
+            $(this).prop('checked', true);
+            updateHiddenFields();
         });
     }
 
-    $('.cart__order-delivery--item input[type="radio"]').on('change', function () {
-        $('.cart__order-delivery--item input[type="radio"]').prop('checked', false);
-        $(this).prop('checked', true);
-        updateSelection(".cart__order-delivery--item");
-    });
+    handleRadioChange('.cart__order-delivery--item');
+    handleRadioChange('.cart__order-payment--item');
 
-    $('.cart__order-payment--item input[type="radio"]').on('change', function () {
-        $('.cart__order-payment--item input[type="radio"]').prop('checked', false);
-        $(this).prop('checked', true);
-        updateSelection(".cart__order-payment--item");
-    });
-
-    $('.cart__order-delivery--item input[type="radio"]').first().prop('checked', true);
-    $('.cart__order-payment--item input[type="radio"]').first().prop('checked', true);
-    updateSelection(".cart__order-delivery--item");
-    updateSelection(".cart__order-payment--item");
-
+// Отправка формы через AJAX
     $("body").on('submit', '#checkout-form', function (e) {
         e.preventDefault();
-
-        let formData = $(this).serialize();
-        let selectedDelivery = $('.cart__order-delivery--item input[type="radio"]:checked').next().find('p').text();
-        let selectedPayment = $('.cart__order-payment--item input[type="radio"]:checked').next().find('p').text();
-
-        if (!selectedDelivery || !selectedPayment) {
-            alert("Пожалуйста, выберите способ доставки и оплаты!");
-            return;
-        }
-
-        formData += `&delivery=${encodeURIComponent(selectedDelivery)}&payment=${encodeURIComponent(selectedPayment)}`;
+        const form = $(this);
+        const formData = form.serialize();
 
         $.ajax({
             type: 'POST',
             url: ajaxData.ajaxurl,
             data: {
                 action: 'process_checkout',
-                form_data: formData
+                form_data: formData,
             },
-            // beforeSend: function() {
-            //     $('#order-result').html('<p>Обработка заказа...</p>');
-            // },
-            success: function (response) {
-                console.log(response);
+            beforeSend: () => $('#order-result').html('<p>Обработка заказа...</p>'),
+            success: (response) => {
                 if (response.success) {
-                    alert(`Заказ ${response.data.applied_coupons} успешно ${response.data.discount_total} оформлен! №\' + ${response.data.order_id}`)
+                    alert(`Заказ №${response.data.order_id} успешно оформлен!`);
                     $('.cart__container').html('<p>Ваша корзина пуста</p>');
+                    $('#order-result').empty();
                 } else {
-                    $('#order-result').html('<p style="color: red;">Ошибка: ' + response.data.message + '</p>');
+                    $('#order-result').html(`<p style="color: red;">Ошибка: ${response.data.message}</p>`);
                 }
             },
-            error: function () {
-                $('#order-result').html('<p style="color: red;">Ошибка сервера</p>');
-            }
+            error: () => $('#order-result').html('<p style="color: red;">Ошибка сервера. Попробуйте снова.</p>'),
         });
     });
 });

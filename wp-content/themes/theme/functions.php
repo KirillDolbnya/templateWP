@@ -232,122 +232,83 @@ function productRemoveFromCart(): void {
     ]);
 }
 
-
-
-
-
-
-
-
-
-
-//add_action('wp_ajax_add_to_cart', 'product_add_to_cart');
-//add_action('wp_ajax_nopriv_add_to_cart', 'product_add_to_cart');
-//
-//function product_add_to_cart() {
-//    $product_id = isset($_POST['product_id']) ? absint($_POST['product_id']) : 0;
-//
-//    if (!$product_id || !wc_get_product($product_id)) {
-//        wp_send_json_error(['message' => 'Товар не найден.']);
-//    }
-//
-//    $quantity = max(1, absint($_POST['quantity'] ?? 1));
-//    $cart = WC()->cart;
-//
-//    $cart_item_key = $cart->add_to_cart($product_id, $quantity);
-//
-//    if ($cart_item_key) {
-//        $product_cart_quantity = WC()->cart->get_cart_item_quantities()[$product_id] ?? $quantity;
-//        $total_quantity = $cart->get_cart_contents_count();
-//
-//        wp_send_json_success([
-//            'product_id' => $product_id,
-//            'product_cart_quantity' => $product_cart_quantity,
-//            'total_quantity' => $total_quantity,
-//        ]);
-//    } else {
-//        wp_send_json_error(['message' => 'Не удалось добавить товар в корзину.']);
-//    }
-//}
-//
-//add_action('wp_ajax_update_product_quantity', 'product_update_cart');
-//add_action('wp_ajax_nopriv_update_product_quantity', 'product_update_cart');
-//
-//function product_update_cart() {
-//    $product_id = isset($_POST['product_id']) ? absint($_POST['product_id']) : 0;
-//    $new_quantity = isset($_POST['quantity']) ? absint($_POST['quantity']) : 0;
-//
-//    if (!$product_id || !$new_quantity) {
-//        wp_send_json_error(['message' => 'Некорректные данные.']);
-//    }
-//
-//    $product = wc_get_product($product_id);
-//
-//    if (!$product) {
-//        wp_send_json_error(['message' => 'Товар не существует.']);
-//    }
-//
-//    $stock_quantity = $product->get_stock_quantity();
-//
-//    if ($new_quantity > $stock_quantity) {
-//        wp_send_json_error(['message' => 'Запрошенное количество превышает остаток.']);
-//    }
-//
-//    $cart = WC()->cart;
-//    $cart_id = $cart->generate_cart_id($product_id);
-//    $cart_item_key = $cart->find_product_in_cart($cart_id);
-//
-//    if ($cart_item_key) {
-//        if ($new_quantity > 0) {
-//            $cart->set_quantity($cart_item_key, $new_quantity);
-//        } else {
-//            $cart->remove_cart_item($cart_item_key);
-//        }
-//
-//        wp_send_json_success([
-//            'new_quantity'    => $new_quantity,
-//            'total_quantity'  => $cart->get_cart_contents_count(),
-//            'message'         => $new_quantity > 0 ? 'Количество обновлено.' : 'Товар удален из корзины.',
-//        ]);
-//    } else {
-//        wp_send_json_error(['message' => 'Товар не найден в корзине.']);
-//    }
-//}
-
 add_action('wp_ajax_process_checkout', 'process_checkout');
 add_action('wp_ajax_nopriv_process_checkout', 'process_checkout');
-
+/**
+ * AJAX-обработчик оформления заказа.
+ */
 function process_checkout() {
     parse_str($_POST['form_data'], $form_data);
 
     if (empty($form_data['billing_first_name']) || empty($form_data['billing_email']) || empty($form_data['billing_phone'])) {
-        wp_send_json_error(['message' => 'Заполните все поля']);
+        wp_send_json_error(['message' => 'Заполните все обязательные поля']);
+        return;
+    }
+
+    if (WC()->cart->is_empty()) {
+        wp_send_json_error(['message' => 'Ваша корзина пуста']);
         return;
     }
 
     $order = wc_create_order();
-    $order->set_address([
+    if (is_wp_error($order)) {
+        wp_send_json_error(['message' => 'Ошибка создания заказа']);
+        return;
+    }
+
+    // Адрес плательщика
+    $billing_address = [
         'first_name' => sanitize_text_field($form_data['billing_first_name']),
         'email'      => sanitize_email($form_data['billing_email']),
         'phone'      => sanitize_text_field($form_data['billing_phone']),
-    ], 'billing');
+    ];
+    $order->set_address($billing_address, 'billing');
 
-    $order->update_meta_data('_delivery_method', sanitize_text_field($form_data['delivery']));
-    $order->update_meta_data('_payment_method', sanitize_text_field($form_data['payment']));
+    // Определение доставки и адреса
+    $delivery_method = sanitize_text_field($form_data['delivery'] ?? 'Не указан');
+    $payment_method = sanitize_text_field($form_data['payment'] ?? 'Не указан');
+    $address = ($delivery_method === 'Курьер') ? sanitize_text_field($form_data['address'] ?? 'Адрес не указан') : '';
 
-    foreach (WC()->cart->get_cart() as $cart_item_key => $cart_item) {
-        $order->add_product(wc_get_product($cart_item['product_id']), $cart_item['quantity']);
+    if ($delivery_method === 'Курьер') {
+        $shipping_rate = new WC_Shipping_Rate('courier', 'Курьер', WC()->cart->get_shipping_total(), [], 'custom_courier');
+        $order->add_shipping($shipping_rate);
+
+        $shipping_address = [
+            'first_name' => $billing_address['first_name'],
+            'address_1'  => $address,
+        ];
+        $order->set_address($shipping_address, 'shipping');
+    } else {
+        $shipping_rate = new WC_Shipping_Rate('self_pickup', 'Самовывоз', 0, [], 'custom_self_pickup');
+        $order->add_shipping($shipping_rate);
     }
+
+    // Добавление товаров из корзины
+    foreach (WC()->cart->get_cart() as $cart_item) {
+        $product = wc_get_product($cart_item['product_id']);
+        if ($product) {
+            $order->add_product($product, $cart_item['quantity']);
+        }
+    }
+
+    // Применение методов оплаты и доставки
+    $order->set_payment_method($payment_method);
+    $order->set_payment_method_title($payment_method);
+    $order->update_meta_data('_delivery_method', $delivery_method);
+    $order->update_meta_data('_payment_method', $payment_method);
+    $order->update_meta_data('_shipping_address', $address);
 
     $order->calculate_totals();
     $order->save();
-    $order_id = $order->get_id();
 
     WC()->cart->empty_cart();
 
     wp_send_json_success([
-        'order_id' => $order_id,
-        'delivery' => $form_data['delivery'],
-        'payment' => $form_data['payment']
+        'order_id'    => $order->get_id(),
+        'order_total' => wc_price($order->get_total()),
+        'delivery'    => $delivery_method,
+        'payment'     => $payment_method,
     ]);
 }
+
+

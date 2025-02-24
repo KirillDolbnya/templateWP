@@ -91,6 +91,7 @@ $cart = WC()->cart->get_cart();
                         </div>
                     </div>
                     <div class="cart__order-delivery">
+                        <input type="hidden" name="delivery" id="selected-delivery">
                         <p>Информация о доставке</p>
                         <div class="cart__order-delivery--items">
                             <label class="cart__order-delivery--item">
@@ -117,7 +118,9 @@ $cart = WC()->cart->get_cart();
                             </label>
                         </div>
                     </div>
+                    <input type="text" name="address" placeholder="Адрес">
                     <div class="cart__order-payment">
+                        <input type="hidden" name="payment" id="selected-payment">
                         <p>Способ оплаты</p>
                         <div class="cart__order-payment--items">
                             <label class="cart__order-payment--item">
