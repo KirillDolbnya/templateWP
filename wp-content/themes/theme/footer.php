@@ -6,12 +6,12 @@ wp_footer();
         <div class="footer__container">
             <div class="footer__top">
                 <div class="footer__logo">
-                    <img src="" alt="">
+                    <?php the_custom_logo(); ?>
                 </div>
                 <div class="footer__nav">
                     <?php
                     wp_nav_menu([
-                        'theme_location' => 'footer',
+                        'theme_location' => 'footer-menu',
                         'menu_class'     => 'footer__nav-items',
                         'container'      => false,
                         'fallback_cb'    => false

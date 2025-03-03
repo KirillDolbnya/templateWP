@@ -2,10 +2,8 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport"
-          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>Document</title>
     <?php wp_head(); ?>
 </head>
 <body>
@@ -13,12 +11,12 @@
     <div class="container">
         <div class="header__container">
             <div class="header__logo">
-                <img src="" alt="">
+                <?php the_custom_logo(); ?>
             </div>
             <nav class="header__nav">
                 <?php
                 wp_nav_menu([
-                    'theme_location' => 'primary',
+                    'theme_location' => 'header-menu',
                     'menu_class'     => 'header__nav-items',
                     'container'      => false,
                     'fallback_cb'    => false

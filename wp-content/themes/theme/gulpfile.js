@@ -1,23 +1,27 @@
-const gulp = require('gulp');
-const dartSass = require('sass');
-const gulpSass = require('gulp-dart-sass');
-const postcss = require('gulp-postcss');
-const autoprefixer = require('autoprefixer');
-const cssnano = require('cssnano');
-const rename = require('gulp-rename');
-const concat = require('gulp-concat');
-const uglify = require('gulp-uglify');
-const sourcemaps = require('gulp-sourcemaps');
-const browserSync = require('browser-sync').create();
+import gulp from 'gulp';
+import dartSass from 'sass';
+import gulpSass from 'gulp-dart-sass';
+import postcss from 'gulp-postcss';
+import autoprefixer from 'autoprefixer';
+import cssnano from 'cssnano';
+import concat from 'gulp-concat';
+import uglify from 'gulp-uglify';
+import sourcemaps from 'gulp-sourcemaps';
+import browserSyncLib from 'browser-sync';
+import babel from 'gulp-babel';
+import { deleteAsync } from 'del';
 
-// Пути к файлам
+// Создаем экземпляр BrowserSync
+const browserSync = browserSyncLib.create();
+
+// Пути
 const paths = {
     styles: {
         src: 'src/scss/style.scss',
         dest: 'dist/css/'
     },
     scripts: {
-        src: 'src/js/**/*.js',
+        src: ['node_modules/axios/dist/axios.min.js', 'src/js/**/*.js'],
         dest: 'dist/js/'
     },
     html: {
@@ -26,28 +30,36 @@ const paths = {
 };
 
 // Очистка папок перед сборкой
-async function clean() {
-    const { deleteAsync } = await import('del');
+function clean() {
     return deleteAsync(['dist/css/*', 'dist/js/*']);
 }
 
-// Компиляция SCSS → CSS
+// Компиляция SCSS в CSS (Dev)
 function styles() {
     return gulp.src(paths.styles.src)
         .pipe(sourcemaps.init())
-        .pipe(gulpSass(dartSass).on('error', gulpSass.logError))
-        .pipe(postcss([autoprefixer(), cssnano()]))
-        .pipe(rename({ suffix: '.min' }))
+        .pipe(gulpSass(dartSass, { includePaths: ['src/scss/'] }).on('error', gulpSass.logError))
+        .pipe(postcss([autoprefixer()]))
+        .pipe(concat('style.min.css'))
         .pipe(sourcemaps.write('.'))
         .pipe(gulp.dest(paths.styles.dest))
         .pipe(browserSync.stream());
 }
 
+// Компиляция SCSS в CSS (Prod)
+function buildStyles() {
+    return gulp.src(paths.styles.src)
+        .pipe(gulpSass(dartSass, { includePaths: ['src/scss/'] }).on('error', gulpSass.logError))
+        .pipe(postcss([autoprefixer(), cssnano()]))
+        .pipe(concat('style.min.css'))
+        .pipe(gulp.dest(paths.styles.dest));
+}
 
-// Объединение и минификация JS
+// Объединение, Babel и минификация JS (Dev)
 function scripts() {
     return gulp.src(paths.scripts.src)
         .pipe(sourcemaps.init())
+        .pipe(babel({ presets: ['@babel/preset-env'] })) // Поддержка старых браузеров
         .pipe(concat('main.min.js'))
         .pipe(uglify())
         .pipe(sourcemaps.write('.'))
@@ -55,7 +67,16 @@ function scripts() {
         .pipe(browserSync.stream());
 }
 
-// Локальный сервер и слежение за изменениями
+// Объединение, Babel и минификация JS (Prod)
+function buildScripts() {
+    return gulp.src(paths.scripts.src)
+        .pipe(babel({ presets: ['@babel/preset-env'] }))
+        .pipe(concat('main.min.js'))
+        .pipe(uglify())
+        .pipe(gulp.dest(paths.scripts.dest));
+}
+
+// Локальный сервер и слежение за файлами
 function serve() {
     browserSync.init({
         proxy: "http://templatewp/",
@@ -64,12 +85,11 @@ function serve() {
 
     gulp.watch('src/scss/**/*.scss', styles);
     gulp.watch('src/js/**/*.js', scripts);
+    gulp.watch(paths.html.src).on('change', browserSync.reload);
 }
 
-// Задачи Gulp
-exports.clean = clean;
-exports.styles = styles;
-exports.scripts = scripts;
-exports.watch = gulp.series(clean, styles, scripts, serve);
-exports.default = gulp.series(clean, styles, scripts, serve);
-
+// Экспорт задач
+export { clean, styles, scripts };
+export const watch = gulp.series(clean, gulp.parallel(styles, scripts), serve);
+export default gulp.series(clean, gulp.parallel(styles, scripts), serve);
+export const build = gulp.series(clean, gulp.parallel(buildStyles, buildScripts));

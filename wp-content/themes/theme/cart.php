@@ -6,6 +6,8 @@ Template Name: Корзина
 get_header();
 
 $cart = WC()->cart->get_cart();
+
+//WC()->cart->empty_cart();
 ?>
 
 <div class="cart">
