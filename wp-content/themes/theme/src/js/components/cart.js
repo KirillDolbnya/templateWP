@@ -2,7 +2,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     const cartQty = document.querySelectorAll('.js-cart-count');
     const totalPrice = document.querySelectorAll('.js-cart-price');
-    const cartContent = document.querySelector('.cart__content')
+    const cartContent = document.querySelector('.cart__content');
 
     const addToCartBtn = (id) => {
         return `
@@ -75,7 +75,9 @@ document.addEventListener('DOMContentLoaded', function () {
                         throw new Error(data.data?.message || "Ошибка при добавлении товара");
                     }
 
-                    cartQty.textContent = data.data.cartQuantity;
+                    cartQty.forEach(item => {
+                        item.textContent = data.data.cartTotalQty;
+                    });
 
                     btn.outerHTML = controlBtnHtml(data.data.productId, data.data.productQty);
 

@@ -8,6 +8,8 @@ add_action('wp_ajax_nopriv_process_checkout', 'process_checkout');
 function process_checkout() {
     parse_str($_POST['form_data'], $form_data);
 
+    wp_send_json_error(['message' => $form_data['billing_first_name']]);
+
     if (empty($form_data['billing_first_name']) || empty($form_data['billing_email']) || empty($form_data['billing_phone'])) {
         wp_send_json_error(['message' => 'Заполните все обязательные поля']);
         return;
