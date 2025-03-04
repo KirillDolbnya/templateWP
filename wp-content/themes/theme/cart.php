@@ -80,7 +80,7 @@ $cart = WC()->cart->get_cart();
                         </div>
                         <div class="cart__order-info--total-price">
                             <p>Итого</p>
-                            <p>0 ₽</p>
+                            <p class="js-cart-price">0 ₽</p>
                         </div>
                     </div>
                     <p>Заполните форму</p>

@@ -19,7 +19,7 @@ add_theme_support(
 // Подключение стилей и скриптов
 function theme_enqueue_styles() {
     wp_enqueue_style('theme-style', get_template_directory_uri() . '/dist/css/style.min.css');
-    wp_enqueue_style('style', get_stylesheet() );
+    wp_enqueue_style('style', get_stylesheet_uri() );
 
     wp_enqueue_script('theme-scripts', get_template_directory_uri() . '/dist/js/main.min.js', array(), null, true);
     wp_localize_script('theme-scripts', 'ajaxData', [
