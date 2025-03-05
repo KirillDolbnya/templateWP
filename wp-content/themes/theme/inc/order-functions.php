@@ -2,13 +2,23 @@
 
 add_action('wp_ajax_process_checkout', 'process_checkout');
 add_action('wp_ajax_nopriv_process_checkout', 'process_checkout');
-/**
- * AJAX-обработчик оформления заказа.
- */
-function process_checkout() {
-    parse_str($_POST['form_data'], $form_data);
 
-    wp_send_json_error(['message' => $form_data['billing_first_name']]);
+// Оформление заказа
+function process_checkout() {
+
+    if (empty($_POST)) {
+        wp_send_json_error(['message' => 'Ошибка: Данные не переданы!']);
+        return;
+    }
+
+    $form_data = [
+        'billing_first_name' => sanitize_text_field($_POST['billing_first_name'] ?? ''),
+        'billing_email'      => sanitize_email($_POST['billing_email'] ?? ''),
+        'billing_phone'      => sanitize_text_field($_POST['billing_phone'] ?? ''),
+        'delivery'           => sanitize_text_field($_POST['delivery'] ?? 'Не указан'),
+        'payment'            => sanitize_text_field($_POST['payment'] ?? 'Не указан'),
+        'address'            => sanitize_text_field($_POST['address'] ?? ''),
+    ];
 
     if (empty($form_data['billing_first_name']) || empty($form_data['billing_email']) || empty($form_data['billing_phone'])) {
         wp_send_json_error(['message' => 'Заполните все обязательные поля']);
@@ -22,7 +32,7 @@ function process_checkout() {
 
     $order = wc_create_order();
     if (is_wp_error($order)) {
-        wp_send_json_error(['message' => 'Ошибка создания заказа']);
+        wp_send_json_error(['message' => 'Ошибка при создании заказа']);
         return;
     }
 
@@ -75,7 +85,7 @@ function process_checkout() {
 
     wp_send_json_success([
         'order_id'    => $order->get_id(),
-        'order_total' => wc_price($order->get_total()),
+        'order_total' => $order->get_total(),
         'delivery'    => $delivery_method,
         'payment'     => $payment_method,
     ]);

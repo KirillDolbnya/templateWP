@@ -1,5 +1,7 @@
 document.addEventListener('DOMContentLoaded', function (){
 
+    const cartQty = document.querySelectorAll('.js-cart-count');
+    const totalPrice = document.querySelectorAll('.js-cart-price');
     const cartContent = document.querySelector('.cart__content');
 
     const deliveryItems = document.querySelectorAll('.cart__order-delivery--item');
@@ -30,74 +32,31 @@ document.addEventListener('DOMContentLoaded', function (){
     });
 
     document.body.addEventListener('submit', function (event){
-        console.log(event);
         event.preventDefault();
 
        if (event.target.closest('#checkout-form')) {
-           // const form = event.target.closest('#checkout-form');
-           // const name = form.querySelector('input[name=billing_first_name]').value;
-           // const phone = form.querySelector('input[name=billing_phone]').value;
-           // const email = form.querySelector('input[name=billing_email]').value;
-           // const address = form.querySelector('input[name=address]')?.value || '';
-           // const deliveryInputs = form.querySelectorAll('.cart__order-delivery--item_input');
-           // const paymentInputs = form.querySelectorAll('.cart__order-payment--item_input');
-           // let delivery;
-           // let payment;
-           //
-           // deliveryInputs.forEach(input => {
-           //    if (input.checked){
-           //        delivery = input.value;
-           //    }
-           // });
-           //
-           // paymentInputs.forEach(input => {
-           //     if (input.checked){
-           //         payment = input.value;
-           //     }
-           // });
-           //
-           // const formData = new URLSearchParams({
-           //     action: 'process_checkout',
-           //     name: name,
-           //     phone: phone,
-           //     email: email,
-           //     address: address,
-           //     delivery: delivery,
-           //     payment: payment
-           // });
-           //
-           // axios.post(ajaxData.ajaxurl, formData)
-           //     .then(response => {
-           //         const data = response.data;
-           //
-           //         if (!data.success) {
-           //             throw new Error(data.data?.message || "Ошибка при оформлении заказа");
-           //         }
-           //
-           //         cartContent.innerHTML = `<p>Ваша корзина пуста</p>`;
-           //
-           //         alert(data.data.message);
-           //     })
-           //     .catch(error => {
-           //         alert(error.message);
-           //     });
-
            const form = event.target.closest('#checkout-form');
 
            // Получаем данные формы
-           const formData = new URLSearchParams(new FormData(form));
-           formData.append('action', 'process_checkout'); // Добавляем action
+           const formData = new FormData(form);
+           formData.append('action', 'process_checkout');
 
-           axios.post(ajaxData.ajaxurl, formData)
+           axios.post(ajaxData.ajaxurl, formData, {
+               headers: { 'Content-Type': 'multipart/form-data' }
+           })
                .then(response => {
                    const data = response.data;
 
                    if (!data.success) {
-                       throw new Error(data.data?.message || "Ошибка при оформлении заказа");
+                       throw new Error(data.data.message);
                    }
 
                    alert(`Заказ #${data.data.order_id} успешно оформлен! Сумма: ${data.data.order_total}`);
                    cartContent.innerHTML = `<p>Ваша корзина пуста</p>`;
+                   totalPrice.textContent = 0;
+                   cartQty.forEach(item => {
+                       item.textContent = 0;
+                   });
                })
                .catch(error => {
                    alert(error.message);
@@ -106,30 +65,3 @@ document.addEventListener('DOMContentLoaded', function (){
     });
 
 });
-
-// Отправка формы через AJAX
-//     $("body").on('submit', '#checkout-form', function (e) {
-//         e.preventDefault();
-//         const form = $(this);
-//         const formData = form.serialize();
-//
-//         $.ajax({
-//             type: 'POST',
-//             url: ajaxData.ajaxurl,
-//             data: {
-//                 action: 'process_checkout',
-//                 form_data: formData,
-//             },
-//             beforeSend: () => $('#order-result').html('<p>Обработка заказа...</p>'),
-//             success: (response) => {
-//                 if (response.success) {
-//                     alert(`Заказ №${response.data.order_id} успешно оформлен!`);
-//                     $('.cart__container').html('<p>Ваша корзина пуста</p>');
-//                     $('#order-result').empty();
-//                 } else {
-//                     $('#order-result').html(`<p style="color: red;">Ошибка: ${response.data.message}</p>`);
-//                 }
-//             },
-//             error: () => $('#order-result').html('<p style="color: red;">Ошибка сервера. Попробуйте снова.</p>'),
-//         });
-//     });
