@@ -8,6 +8,11 @@ get_header();
 $cart = WC()->cart->get_cart();
 
 //WC()->cart->empty_cart();
+//$payment_gateways = WC()->payment_gateways->get_available_payment_gateways();
+//$shipping_methods = WC()->shipping->get_shipping_methods();
+//
+//print_r($payment_gateways);
+//print_r($shipping_methods);
 ?>
 
 <div class="cart">
