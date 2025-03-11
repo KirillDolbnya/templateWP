@@ -92,9 +92,9 @@ $cart = WC()->cart->get_cart();
                     <div class="cart__order-inputs">
                         <p>Ваши данные</p>
                         <div class="cart__order-input">
-                            <input name="billing_first_name" type="text" placeholder="Ваше имя">
-                            <input name="billing_phone" type="text" placeholder="Телефон">
-                            <input name="billing_email" type="text" placeholder="Почта">
+                            <input name="name" type="text" placeholder="Ваше имя">
+                            <input name="phone" type="text" placeholder="Телефон">
+                            <input name="email" type="text" placeholder="Почта">
                         </div>
                     </div>
                     <div class="cart__order-delivery">

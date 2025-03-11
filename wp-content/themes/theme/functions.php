@@ -23,8 +23,7 @@ function theme_enqueue_styles() {
 
     wp_enqueue_script('theme-scripts', get_template_directory_uri() . '/dist/js/main.min.js', array(), null, true);
     wp_localize_script('theme-scripts', 'ajaxData', [
-        'ajaxurl' => admin_url('admin-ajax.php'),
-        'nonce'   => wp_create_nonce('ajax_nonce')
+        'ajaxurl' => admin_url('admin-ajax.php')
     ]);
 }
 add_action('wp_enqueue_scripts', 'theme_enqueue_styles');
@@ -65,3 +64,9 @@ require get_template_directory() . '/inc/order-functions.php';
 
 // Отправка на почту
 require get_template_directory() . '/inc/form-functions.php';
+
+// Авторизация
+require get_template_directory() . '/inc/login-function.php';
+
+// Аккаунт
+require get_template_directory() . '/inc/account-functions.php';

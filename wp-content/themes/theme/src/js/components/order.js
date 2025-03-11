@@ -32,9 +32,9 @@ document.addEventListener('DOMContentLoaded', function (){
     });
 
     document.body.addEventListener('submit', function (event){
-        event.preventDefault();
-
        if (event.target.closest('#checkout-form')) {
+           event.preventDefault();
+
            const form = event.target.closest('#checkout-form');
 
            // Получаем данные формы

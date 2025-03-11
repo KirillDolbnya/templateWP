@@ -12,9 +12,9 @@ function process_checkout() {
     }
 
     $form_data = [
-        'billing_first_name' => sanitize_text_field($_POST['billing_first_name'] ?? ''),
-        'billing_email'      => sanitize_email($_POST['billing_email'] ?? ''),
-        'billing_phone'      => sanitize_text_field($_POST['billing_phone'] ?? ''),
+        'billing_first_name' => sanitize_text_field($_POST['name'] ?? ''),
+        'billing_email'      => sanitize_email($_POST['email'] ?? ''),
+        'billing_phone'      => sanitize_text_field($_POST['phone'] ?? ''),
         'delivery'           => sanitize_text_field($_POST['delivery'] ?? 'Не указан'),
         'payment'            => sanitize_text_field($_POST['payment'] ?? 'Не указан'),
         'address'            => sanitize_text_field($_POST['address'] ?? ''),
@@ -77,6 +77,11 @@ function process_checkout() {
     $order->update_meta_data('_delivery_method', $delivery_method);
     $order->update_meta_data('_payment_method', $payment_method);
     $order->update_meta_data('_shipping_address', $address);
+
+    $current_user_id = get_current_user_id();
+    if ($current_user_id) {
+        $order->set_customer_id($current_user_id);
+    }
 
     $order->calculate_totals();
     $order->save();
